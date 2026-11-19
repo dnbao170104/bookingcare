@@ -1,21 +1,20 @@
-import express from "express";
-import bodyParser from "body-parser";
-import viewEngine from "./config/viewEngine";
-import initWebRoutes from "./route/web"; // Đã sửa tên import cho khớp với tên gọi ở dưới
-import connectDB from "./config/connectDB";
 require("dotenv").config();
+const express = require("express");
+const apiRoutes = require("./route/api");
+const { resolveLanguage } = require("./middlewares/languageMiddleware");
 
-let app = express();
+const app = express();
 
-connectDB();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware ngôn ngữ vi / en
+app.use(resolveLanguage);
 
-viewEngine(app);
-initWebRoutes(app);
+// Routes
+app.use("/api/v1", apiRoutes);
 
-let port = process.env.PORT || 6969;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
-  console.log("backend is running now on port " + port);
+  console.log(`Backend Nodejs is running on the port: ${port}`);
 });

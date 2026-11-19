@@ -1,0 +1,26 @@
+Tôi đang làm đồ án tốt nghiệp hệ thống đặt lịch khám bệnh trực tuyến (mô hình giống BookingCare, có mở rộng quản lý kê toa, hóa đơn và hoa hồng) bằng Node.js, Express, Babel và MySQL với Sequelize ORM.
+
+Cấu trúc thư mục chính nằm trong `src/`:
+- `src/config/config.json`
+- `src/controllers/`
+- `src/migrations/`
+- `src/models/` (nạp tự động qua `src/models/index.js`, xuất `db.<ModelName>`)
+- `src/public/`
+- `src/route/` (lưu ý thư mục tên là `route`, số ít)
+- `src/seeders/`
+- `src/services/`
+- `src/views/`
+- `src/server.js`
+
+Các bảng/model chính:
+- Cốt lõi: `User`, `Allcode`, `Schedule`, `Booking`, `Specialty`, `Clinic`, `History`
+- Mở rộng y tế & thương mại: `Markdown`, `DoctorInfor`, `Prescription`, `Invoice`, `Commission`
+
+Quy ước code:
+- Dùng CommonJS (`require` / `module.exports`) hoặc cú pháp tương thích tốt với `babel-node`.
+- Mã hóa mật khẩu dùng `bcryptjs`.
+- Hỗ trợ đa ngôn ngữ `vi` và `en` qua `req.lang` (mặc định `'vi'`).
+- Controller chỉ nhận `req`, validate cơ bản, gọi `service`, trả về JSON chuẩn `{ errCode, message, ... }` với HTTP status code phù hợp.
+- Service chứa toàn bộ logic nghiệp vụ, truy vấn Sequelize, dùng `sequelize.transaction()` cho các luồng ghi nhiều bảng (như hoàn tất khám tạo History, Prescription, Invoice, Commission).
+
+Khi tôi yêu cầu viết API/Controller/Service, hãy viết code hoàn chỉnh, rõ ràng, không dùng placeholder sơ sài.

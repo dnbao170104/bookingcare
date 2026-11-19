@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 const bcrypt = require("bcryptjs");
 
 // Số round mã hóa (mặc định thường dùng là 10)
@@ -14,3 +15,4 @@ const hashUserPasswordFromBcrypt = (password) => {
     }
   });
 };
+module.exports = { hashUserPasswordFromBcrypt };

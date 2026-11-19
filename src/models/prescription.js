@@ -1,54 +1,40 @@
 "use strict";
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("Prescriptions", {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER,
-      },
-      bookingId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Bookings",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      doctorId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      patientId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      medicineName: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      usage: {
-        type: Sequelize.STRING,
-        allowNull: false, // Liều lượng / Cách dùng (VD: Sáng 1 viên, chiều 1 viên)
-      },
-      quantity: {
-        type: Sequelize.INTEGER,
-        allowNull: false, // Số lượng thuốc
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    });
-  },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("Prescriptions");
-  },
+const { Model } = require("sequelize");
+
+module.exports = (sequelize, DataTypes) => {
+  class Prescription extends Model {
+    static associate(models) {
+      // Mỗi toa thuốc gắn liền với một lịch hẹn (Booking) cụ thể
+      Prescription.belongsTo(models.Booking, {
+        foreignKey: "bookingId",
+        as: "bookingPrescriptionData",
+      });
+      Prescription.belongsTo(models.User, {
+        foreignKey: "patientId",
+        as: "patientPrescriptionData",
+      });
+      Prescription.belongsTo(models.User, {
+        foreignKey: "doctorId",
+        as: "doctorPrescriptionData",
+      });
+    }
+  }
+
+  Prescription.init(
+    {
+      bookingId: DataTypes.INTEGER,
+      doctorId: DataTypes.INTEGER,
+      patientId: DataTypes.INTEGER,
+      medicineName: DataTypes.STRING,
+      usage: DataTypes.STRING,
+      quantity: DataTypes.INTEGER,
+    },
+    {
+      sequelize,
+      modelName: "Prescription",
+      tableName: "Prescriptions",
+    },
+  );
+
+  return Prescription;
 };

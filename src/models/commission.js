@@ -4,14 +4,9 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Commission extends Model {
     static associate(models) {
-      // Liên kết Commission với Booking và Invoice
       Commission.belongsTo(models.Booking, {
         foreignKey: "bookingId",
-        as: "bookingCommissionData",
-      });
-      Commission.belongsTo(models.Invoice, {
-        foreignKey: "invoiceId",
-        as: "invoiceCommissionData",
+        as: "bookingData",
       });
       Commission.belongsTo(models.User, {
         foreignKey: "doctorId",
@@ -22,14 +17,30 @@ module.exports = (sequelize, DataTypes) => {
 
   Commission.init(
     {
-      bookingId: DataTypes.INTEGER,
-      invoiceId: DataTypes.INTEGER,
-      doctorId: DataTypes.INTEGER,
-      totalAmount: DataTypes.FLOAT,
-      commissionRate: DataTypes.FLOAT,
-      platformFee: DataTypes.FLOAT,
-      doctorAmount: DataTypes.FLOAT,
-      status: DataTypes.STRING,
+      bookingId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      doctorId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      baseAmount: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+      },
+      commissionRate: {
+        type: DataTypes.DECIMAL(5, 2),
+        defaultValue: 30.0,
+      },
+      commissionAmount: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+      },
+      status: {
+        type: DataTypes.STRING,
+        defaultValue: "PENDING", // PENDING | SETTLED | CANCELLED
+      },
     },
     {
       sequelize,

@@ -1,12 +1,23 @@
 "use strict";
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("doctor_infors", {
+    await queryInterface.createTable("Commissions", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
+      },
+      bookingId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Bookings",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       doctorId: {
         type: Sequelize.INTEGER,
@@ -18,42 +29,25 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      specialtyId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      clinicId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      priceId: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      provinceId: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      paymentId: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      addressClinic: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      nameClinic: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      note: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      count: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
+      baseAmount: {
+        type: Sequelize.DECIMAL(12, 2),
         defaultValue: 0,
+        allowNull: false,
+      },
+      commissionRate: {
+        type: Sequelize.DECIMAL(5, 2),
+        defaultValue: 30.0,
+        allowNull: false,
+      },
+      commissionAmount: {
+        type: Sequelize.DECIMAL(12, 2),
+        defaultValue: 0,
+        allowNull: false,
+      },
+      status: {
+        type: Sequelize.STRING,
+        defaultValue: "PENDING",
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -65,7 +59,8 @@ module.exports = {
       },
     });
   },
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("doctor_infors");
+
+  down: async (queryInterface) => {
+    await queryInterface.dropTable("Commissions");
   },
 };
