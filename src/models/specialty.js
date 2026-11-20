@@ -4,8 +4,8 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Specialty extends Model {
     static associate(models) {
-      // Một chuyên khoa có thể có nhiều thông tin bác sĩ (DoctorInfor)
-      Specialty.hasMany(models.DoctorInfor, {
+      // Một chuyên khoa có thể có nhiều thông tin bác sĩ (Doctor_Infor)
+      Specialty.hasMany(models.Doctor_Infor, {
         foreignKey: "specialtyId",
         as: "specialtyData",
       });

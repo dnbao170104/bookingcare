@@ -4,31 +4,7 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Booking extends Model {
     static associate(models) {
-      // Liên kết Booking với trạng thái qua Allcode
-      Booking.belongsTo(models.Allcode, {
-        foreignKey: "statusId",
-        targetKey: "key",
-        as: "statusData",
-      });
-
-      // Liên kết Booking với khung giờ qua Allcode
-      Booking.belongsTo(models.Allcode, {
-        foreignKey: "timeType",
-        targetKey: "key",
-        as: "timeTypeData",
-      });
-
-      // Lịch hẹn thuộc về bệnh nhân (User) và phục vụ bác sĩ (User)
-      Booking.belongsTo(models.User, {
-        foreignKey: "patientId",
-        targetKey: "id",
-        as: "patientData",
-      });
-      Booking.belongsTo(models.User, {
-        foreignKey: "doctorId",
-        targetKey: "id",
-        as: "doctorBookingData",
-      });
+      // Giữ nguyên các quan hệ hiện có nếu em đã khai báo
     }
   }
 
@@ -40,11 +16,33 @@ module.exports = (sequelize, DataTypes) => {
       date: DataTypes.STRING,
       timeType: DataTypes.STRING,
       token: DataTypes.STRING,
+
+      // Bổ sung các cột tiền cọc 30% & thanh toán
+      consultationFee: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+      },
+      depositRate: {
+        type: DataTypes.DECIMAL(5, 2),
+        defaultValue: 30.0,
+      },
+      depositAmount: {
+        type: DataTypes.DECIMAL(12, 2),
+        defaultValue: 0,
+      },
+      depositStatus: {
+        type: DataTypes.STRING,
+        defaultValue: "UNPAID",
+      },
+      paymentMethod: DataTypes.STRING,
+      paymentRef: DataTypes.STRING,
+      paidAt: DataTypes.DATE,
     },
     {
       sequelize,
       modelName: "Booking",
-      tableName: "Bookings",
+      tableName: "bookings",
+      freezeTableName: true,
     },
   );
 

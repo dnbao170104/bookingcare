@@ -1,5 +1,4 @@
 "use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable("Commissions", {
@@ -19,35 +18,41 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      doctorId: {
+      invoiceId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Users",
+          model: "Invoices",
           key: "id",
         },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      baseAmount: {
-        type: Sequelize.DECIMAL(12, 2),
-        defaultValue: 0,
+      doctorId: {
+        type: Sequelize.INTEGER,
         allowNull: false,
+      },
+      totalAmount: {
+        type: Sequelize.FLOAT,
+        allowNull: false, // Tổng tiền khám
       },
       commissionRate: {
-        type: Sequelize.DECIMAL(5, 2),
-        defaultValue: 30.0,
+        type: Sequelize.FLOAT,
         allowNull: false,
+        defaultValue: 10.0, // Mặc định hoa hồng sàn là 10%
       },
-      commissionAmount: {
-        type: Sequelize.DECIMAL(12, 2),
-        defaultValue: 0,
-        allowNull: false,
+      platformFee: {
+        type: Sequelize.FLOAT,
+        allowNull: false, // Tiền hoa hồng sàn hưởng
+      },
+      doctorAmount: {
+        type: Sequelize.FLOAT,
+        allowNull: false, // Tiền bác sĩ nhận sau khi trừ hoa hồng
       },
       status: {
         type: Sequelize.STRING,
-        defaultValue: "PENDING",
         allowNull: false,
+        defaultValue: "UNPAID", // Trạng thái quyết toán: UNPAID / PAID
       },
       createdAt: {
         allowNull: false,
@@ -59,8 +64,7 @@ module.exports = {
       },
     });
   },
-
-  down: async (queryInterface) => {
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable("Commissions");
   },
 };

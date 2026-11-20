@@ -1,54 +1,48 @@
 "use strict";
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn("Bookings", "consultationFee", {
-      type: Sequelize.DECIMAL(12, 2),
-      defaultValue: 0,
-      allowNull: false,
-    });
-
-    await queryInterface.addColumn("Bookings", "depositRate", {
-      type: Sequelize.DECIMAL(5, 2),
-      defaultValue: 30.0,
-      allowNull: false,
-    });
-
-    await queryInterface.addColumn("Bookings", "depositAmount", {
-      type: Sequelize.DECIMAL(12, 2),
-      defaultValue: 0,
-      allowNull: false,
-    });
-
-    await queryInterface.addColumn("Bookings", "depositStatus", {
-      type: Sequelize.STRING,
-      defaultValue: "UNPAID",
-      allowNull: false,
-    });
-
-    await queryInterface.addColumn("Bookings", "paymentMethod", {
-      type: Sequelize.STRING,
-      allowNull: true,
-    });
-
-    await queryInterface.addColumn("Bookings", "paymentRef", {
-      type: Sequelize.STRING,
-      allowNull: true,
-    });
-
-    await queryInterface.addColumn("Bookings", "paidAt", {
-      type: Sequelize.DATE,
-      allowNull: true,
+    await queryInterface.createTable("Bookings", {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER,
+      },
+      statusId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      doctorId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      patientId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      date: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      timeType: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      token: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
     });
   },
-
-  down: async (queryInterface) => {
-    await queryInterface.removeColumn("Bookings", "paidAt");
-    await queryInterface.removeColumn("Bookings", "paymentRef");
-    await queryInterface.removeColumn("Bookings", "paymentMethod");
-    await queryInterface.removeColumn("Bookings", "depositStatus");
-    await queryInterface.removeColumn("Bookings", "depositAmount");
-    await queryInterface.removeColumn("Bookings", "depositRate");
-    await queryInterface.removeColumn("Bookings", "consultationFee");
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable("Bookings");
   },
 };

@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class Clinic extends Model {
     static associate(models) {
       // Một phòng khám có thể chứa thông tin cấu hình của nhiều bác sĩ
-      Clinic.hasMany(models.DoctorInfor, {
+      Clinic.hasMany(models.Doctor_Infor, {
         foreignKey: "clinicId",
         as: "clinicData",
       });

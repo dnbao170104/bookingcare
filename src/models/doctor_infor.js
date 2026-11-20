@@ -2,16 +2,16 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class DoctorInfor extends Model {
+  class Doctor_Infor extends Model {
     static associate(models) {
-      DoctorInfor.belongsTo(models.User, {
+      Doctor_Infor.belongsTo(models.User, {
         foreignKey: "doctorId",
         targetKey: "id",
-        as: "doctorInforData",
+        as: "Doctor_InforData",
       });
 
       if (models.Allcode) {
-        DoctorInfor.belongsTo(models.Allcode, {
+        Doctor_Infor.belongsTo(models.Allcode, {
           foreignKey: "priceId",
           targetKey: "key",
           as: "priceTypeData",
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  DoctorInfor.init(
+  Doctor_Infor.init(
     {
       doctorId: {
         type: DataTypes.INTEGER,
@@ -45,10 +45,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "DoctorInfor",
-      tableName: "DoctorInfors",
+      modelName: "Doctor_Infor",
+      tableName: "Doctor_Infors",
     },
   );
 
-  return DoctorInfor;
+  return Doctor_Infor;
 };

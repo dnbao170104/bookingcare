@@ -16,10 +16,7 @@ router.post("/patient-book-appointment", bookingController.handleCreateBooking);
 router.post("/booking/confirm-deposit", bookingController.handleConfirmDeposit);
 
 // Schedule
-router.post(
-  "/bulk-create-schedule",
-  scheduleController.handleBulkCreateSchedule,
-);
+router.post("/create-schedule", scheduleController.handleBulkCreateSchedule);
 router.get(
   "/get-schedule-doctor-by-date",
   scheduleController.handleGetScheduleByDate,
