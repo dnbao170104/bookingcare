@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { Op } = require("sequelize");
 const db = require("../models");
 
 const DEFAULT_DEPOSIT_RATE = 30;
@@ -8,17 +9,25 @@ const MESSAGES = {
     vi: "Vui lòng nhập đầy đủ thông tin đặt lịch (doctorId, patientId, date, timeType)",
     en: "Missing required booking fields (doctorId, patientId, date, timeType)",
   },
+  invalidTimeType: {
+    vi: "Khung giờ (timeType) không tồn tại trong hệ thống",
+    en: "Invalid timeType slot",
+  },
   missingFee: {
     vi: "Chưa có giá khám cho bác sĩ này để tính tiền đặt chỗ 30%",
     en: "Consultation fee is not configured for this doctor to calculate 30% deposit",
   },
+  noScheduleSlot: {
+    vi: "Bác sĩ chưa mở khung giờ này trong ngày đã chọn",
+    en: "Doctor has not opened this time slot on the selected date",
+  },
   slotBooked: {
-    vi: "Khung giờ này đã có lịch đặt trong ngày đã chọn",
+    vi: "Khung giờ này đã có người đặt trong ngày đã chọn",
     en: "This time slot is already booked for the selected date",
   },
   createSuccess: {
-    vi: "Tạo lịch khám thành công. Vui lòng thanh toán 30% tiền giữ chỗ",
-    en: "Booking created successfully. Please pay the 30% deposit fee",
+    vi: "Đặt lịch khám thành công. Vui lòng thanh toán 30% tiền giữ chỗ",
+    en: "Appointment booked successfully. Please pay the 30% deposit fee",
   },
   bookingNotFound: {
     vi: "Không tìm thấy lịch hẹn",
@@ -47,14 +56,8 @@ const calcThirtyPercent = (consultationFee, rate = DEFAULT_DEPOSIT_RATE) => {
   return { fee, pct, depositAmount, remainingAmount };
 };
 
-const createBooking = async (data, lang = "vi") => {
-  const {
-    doctorId,
-    patientId,
-    date,
-    timeType,
-    consultationFee: inputFee,
-  } = data;
+const createBooking = async (data = {}, lang = "vi") => {
+  const { doctorId, patientId, date, timeType, reason } = data;
 
   if (!doctorId || !patientId || !date || !timeType) {
     return {
@@ -63,21 +66,44 @@ const createBooking = async (data, lang = "vi") => {
     };
   }
 
-  // Lấy giá khám từ DoctorInfor nếu có, hoặc dùng giá truyền vào
-  let fee = Number(inputFee) || 0;
-  let rate = DEFAULT_DEPOSIT_RATE;
+  const cleanDoctorId = Number(doctorId);
+  const cleanPatientId = Number(patientId);
+  const cleanDate = String(date).trim();
+  const cleanTimeType = String(timeType).trim();
 
-  if (db.DoctorInfor) {
-    const doctorInfor = await db.DoctorInfor.findOne({
-      where: { doctorId },
+  // 0. Kiểm tra timeType có tồn tại trong Allcodes (type = 'TIME')
+  if (db.Allcode) {
+    const timeCode = await db.Allcode.findOne({
+      where: {
+        key: cleanTimeType,
+        type: "TIME",
+      },
       raw: true,
     });
-    if (doctorInfor) {
-      if (Number(doctorInfor.consultationFee) > 0) {
-        fee = Number(doctorInfor.consultationFee);
+
+    if (!timeCode) {
+      return {
+        errCode: 5,
+        message: getMsg("invalidTimeType", lang),
+      };
+    }
+  }
+
+  // 1. Lấy giá khám & tỷ lệ cọc (mặc định 30%) từ Doctor_Infor nếu có
+  let fee = 0;
+  let rate = DEFAULT_DEPOSIT_RATE;
+
+  if (db.Doctor_Infor) {
+    const Doctor_Infor = await db.Doctor_Infor.findOne({
+      where: { doctorId: cleanDoctorId },
+      raw: true,
+    });
+    if (Doctor_Infor) {
+      if (Number(Doctor_Infor.consultationFee) > 0) {
+        fee = Number(Doctor_Infor.consultationFee);
       }
-      if (Number(doctorInfor.depositRate) > 0) {
-        rate = Number(doctorInfor.depositRate);
+      if (Number(Doctor_Infor.depositRate) > 0) {
+        rate = Number(Doctor_Infor.depositRate);
       }
     }
   }
@@ -89,40 +115,69 @@ const createBooking = async (data, lang = "vi") => {
     };
   }
 
-  // Kiểm tra trùng lịch theo doctorId + date + timeType (bỏ qua lịch đã hủy)
+  // 2. Nếu bác sĩ đã tạo lịch cho ngày đó trong bảng Schedules thì kiểm tra khung giờ có mở không
+  if (db.Schedule) {
+    const doctorSchedulesForDate = await db.Schedule.findAll({
+      where: {
+        doctorId: cleanDoctorId,
+        date: cleanDate,
+      },
+      raw: true,
+    });
+
+    if (doctorSchedulesForDate.length > 0) {
+      const hasSlot = doctorSchedulesForDate.some(
+        (item) => String(item.timeType).trim() === cleanTimeType,
+      );
+      if (!hasSlot) {
+        return {
+          errCode: 3,
+          message: getMsg("noScheduleSlot", lang),
+        };
+      }
+    }
+  }
+
+  // 3. Kiểm tra trùng lịch theo doctorId + date + timeType (bỏ qua S4: Đã hủy)
   const existing = await db.Booking.findOne({
     where: {
-      doctorId,
-      date: String(date).trim(),
-      timeType: String(timeType).trim(),
-      statusId: { [db.Sequelize.Op.ne]: "S4" }, // S4: Đã hủy
+      doctorId: cleanDoctorId,
+      date: cleanDate,
+      timeType: cleanTimeType,
+      statusId: { [Op.ne]: "S4" },
     },
     raw: true,
   });
 
   if (existing) {
     return {
-      errCode: 3,
+      errCode: 4,
       message: getMsg("slotBooked", lang),
     };
   }
 
+  // 4. Tính tiền cọc 30% và tạo bản ghi Booking
   const { depositAmount, remainingAmount } = calcThirtyPercent(fee, rate);
   const token = crypto.randomBytes(16).toString("hex");
 
-  const booking = await db.Booking.create({
-    statusId: "S1", // Chờ xác nhận / thanh toán giữ chỗ
-    doctorId,
-    patientId,
-    date: String(date).trim(),
-    timeType: String(timeType).trim(),
+  const bookingPayload = {
+    statusId: "S1", // Chờ cọc / Xác nhận
+    doctorId: cleanDoctorId,
+    patientId: cleanPatientId,
+    date: cleanDate,
+    timeType: cleanTimeType,
     token,
     consultationFee: fee,
     depositRate: rate,
     depositAmount,
     depositStatus: "UNPAID",
-  });
+  };
 
+  if (reason && db.Booking.rawAttributes?.reason) {
+    bookingPayload.reason = String(reason).trim();
+  }
+
+  const booking = await db.Booking.create(bookingPayload);
   const plain = booking.get({ plain: true });
 
   return {
@@ -136,7 +191,7 @@ const createBooking = async (data, lang = "vi") => {
   };
 };
 
-const confirmBookingDeposit = async (payload, lang = "vi") => {
+const confirmBookingDeposit = async (payload = {}, lang = "vi") => {
   const { bookingId, paymentMethod, paymentRef } = payload;
 
   if (!bookingId) {
@@ -153,7 +208,9 @@ const confirmBookingDeposit = async (payload, lang = "vi") => {
     };
   }
 
-  const booking = await db.Booking.findOne({ where: { id: bookingId } });
+  const booking = await db.Booking.findOne({
+    where: { id: Number(bookingId) },
+  });
   if (!booking) {
     return {
       errCode: 3,
@@ -163,7 +220,7 @@ const confirmBookingDeposit = async (payload, lang = "vi") => {
 
   await booking.update({
     depositStatus: "PAID",
-    statusId: "S2", // Đã xác nhận lịch hẹn
+    statusId: "S2",
     paymentMethod: paymentMethod || "BANK_TRANSFER",
     paymentRef: String(paymentRef).trim(),
     paidAt: new Date(),
@@ -172,6 +229,7 @@ const confirmBookingDeposit = async (payload, lang = "vi") => {
   return {
     errCode: 0,
     message: getMsg("confirmDepositSuccess", lang),
+    lang: lang === "en" ? "en" : "vi",
     data: booking.get({ plain: true }),
   };
 };

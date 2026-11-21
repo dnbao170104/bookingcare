@@ -33,6 +33,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(5, 2),
         defaultValue: 30.0,
       },
+      invoiceId: {
+        type: DataTypes.INTEGER,
+        allowNull: false, // hoặc true nếu có thể null trước khi thanh toán
+      },
       commissionAmount: {
         type: DataTypes.DECIMAL(12, 2),
         defaultValue: 0,
